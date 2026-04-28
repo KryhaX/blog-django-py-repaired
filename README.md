@@ -1,3 +1,22 @@
+# OpenShift Compatibility Update
+
+**Status:** Updated for Modern OpenShift Environments (2026+)
+
+### ⚠️ Tutorial Compatibility Note
+This repository has been updated to fix critical build failures encountered during the Red Hat Developer tutorial:
+[Install an application from source code in a GitHub repository using the OpenShift web console](https://developers.redhat.com/learning/learn:openshift:foundations-openshift/resource/resources:install-application-source-code-github-repository-using-openshift-web-console) (Foundations of OpenShift - Tutorial 4).
+
+The original tutorial environment relied on outdated tools and specific S2I (Source-to-Image) builder behaviors that are no longer compatible with modern OpenShift distributions and Python builder images.
+
+### Resolved Issues:
+* **Powershift CLI Deprecation:** The application previously attempted to invoke `powershift image jobs`, a command that is deprecated or absent in current `powershift-cli` versions (v1.3+). This resulted in the following build error:
+    > `Error: No such command 'image'.`
+    > `error: build error: building at STEP "RUN /tmp/scripts/assemble": while running runtime: exit status 2`
+* **Internal Scheduler Fix:** Corrected a syntax error in `cronjobs.py` where `schedule.run_pending()` was improperly called as `run_pendin`, and added a CPU-safety sleep interval to the main execution loop.
+* **Dependency Alignment:** Updated `requirements.txt` to ensure compatibility between modern Django (4.2+) and legacy background scheduling tasks.
+
+The application is now fully deployable via the OpenShift Web Console using the standard Python S2I workflow.
+
 This repository contains a sample implementation of a blog application, designed to show off various features of OpenShift. The blog application is implemented using Python and Django.
 
 In the default deployment configuration, the blog application uses a SQLite database within the container. When using the SQLite database, it will be pre-populated each time the application starts with a set of blog posts. An initial account will also be created for logging into the application to add more posts. The user name for this account is ``developer`` and the password is ``developer``.
