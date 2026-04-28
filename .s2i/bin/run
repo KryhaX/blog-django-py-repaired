@@ -2,14 +2,12 @@
 
 set -eo pipefail
 
-# If a wheelhouse cache directory exists, the repository was used as
-# input to a wheelhouse build, to build Python wheels for required packages.
-# In this case fall through to executing the original 'run' script.
-
+# Jeśli istnieje katalog wheelhouse, użyj standardowego skryptu S2I
 if [ -d /opt/app-root/wheelhouse ]; then
     exec /opt/app-root/s2i/run
 fi
 
-# Run the deployment phase with support for action hooks.
+python manage.py runserver 0.0.0.0:8080
 
-exec powershift image run
+# or try this insted 
+# exec mod_wsgi-express start-server --port 8080 blog_django_py/wsgi.py
