@@ -3,20 +3,41 @@
 **Status:** Updated for Modern OpenShift Environments (2026+)
 
 ### ⚠️ Tutorial Compatibility Note
-This repository has been updated to fix critical build failures encountered during the Red Hat Developer tutorial:
+This repository has been updated to fix critical build failures and runtime errors encountered during the Red Hat Developer tutorial:
 [Install an application from source code in a GitHub repository using the OpenShift web console](https://developers.redhat.com/learning/learn:openshift:foundations-openshift/resource/resources:install-application-source-code-github-repository-using-openshift-web-console) (Foundations of OpenShift - Tutorial 4).
 
 The original tutorial environment relied on outdated tools and specific S2I (Source-to-Image) builder behaviors that are no longer compatible with modern OpenShift distributions and Python builder images.
 
 ### Resolved Issues:
-* **Powershift CLI Deprecation:** The application previously attempted to invoke `powershift image jobs`, a command that is deprecated or absent in current `powershift-cli` versions (v1.3+). This resulted in the following build error:
+
+* **Powershift CLI Deprecation (Build/Runtime Fix):** The application previously used a `run` script invoking `powershift image run`. In modern versions (v1.3+), this command is deprecated/absent, leading to:
     > `Error: No such command 'image'.`
     > `error: build error: building at STEP "RUN /tmp/scripts/assemble": while running runtime: exit status 2`
-* **Internal Scheduler Fix:** Corrected a syntax error in `cronjobs.py` where `schedule.run_pending()` was improperly called as `run_pendin`, and added a CPU-safety sleep interval to the main execution loop.
-* **Dependency Alignment:** Updated `requirements.txt` to ensure compatibility between modern Django (4.2+) and legacy background scheduling tasks.
+    **Fix:** Replaced the `run` script with a standard Python execution flow (`python manage.py runserver`).
+
+* **Database Initialization (Runtime Fix):**
+    Modern S2I environments do not always trigger automatic migrations for SQLite-based Django apps. This caused a `500 Internal Server Error` (Error: `no such table: blog_post`).
+    **Fix:** Added `python manage.py migrate` to the startup process to ensure the database schema is created on deployment.
+
+* **Internal Scheduler Fix:** Corrected a syntax error in `cronjobs.py` where `schedule.run_pending()` was improperly called as `run_pendin`, and added a CPU-safety sleep interval to prevent 100% CPU usage.
+
+* **Dependency Alignment:** Updated `requirements.txt` to align Django 4.2+ with modern Python 3.9+ builder images.
+
+---
+
+### ℹ️ Why is the Blog Empty?
+When you first launch the application, you will see a "Success" page or an empty blog list instead of the sample posts shown in the tutorial screenshots. 
+
+**This is expected behavior because:**
+1. **Ephemeral Storage:** The application uses **SQLite**. In OpenShift, unless a Persistent Volume (PVC) is attached, the database file is stored in the container's ephemeral memory. Every time the pod restarts or a new build is deployed, the database is wiped clean.
+2. **Manual Data Entry:** The tutorial screenshots show data that was manually added via the Django Admin panel. 
+
+**To see content, you must:**
+1. Access the pod terminal: `oc rsh <pod-name>`
+2. Create an admin account: `python manage.py createsuperuser`
+3. Log in to `http://<your-route-url>/admin` and add blog posts manually.
 
 The application is now fully deployable via the OpenShift Web Console using the standard Python S2I workflow.
-
 This repository contains a sample implementation of a blog application, designed to show off various features of OpenShift. The blog application is implemented using Python and Django.
 
 In the default deployment configuration, the blog application uses a SQLite database within the container. When using the SQLite database, it will be pre-populated each time the application starts with a set of blog posts. An initial account will also be created for logging into the application to add more posts. The user name for this account is ``developer`` and the password is ``developer``.
