@@ -2,12 +2,10 @@
 
 set -eo pipefail
 
-# Jeśli istnieje katalog wheelhouse, użyj standardowego skryptu S2I
 if [ -d /opt/app-root/wheelhouse ]; then
     exec /opt/app-root/s2i/run
 fi
 
-python manage.py runserver 0.0.0.0:8080
+python manage.py migrate --noinput
 
-# or try this insted 
-# exec mod_wsgi-express start-server --port 8080 blog_django_py/wsgi.py
+python manage.py runserver 0.0.0.0:8080
